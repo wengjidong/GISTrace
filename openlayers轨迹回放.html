@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Marker Animation</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="ol-debug.js"></script>
+</head>
+<body>
+<div id="map" class="map"></div>
+<label for="speed">
+    speed:&nbsp;
+    <input id="speed" type="range" min="10" max="999" step="10" value="60">
+</label>
+<button id="start-animation">Start Animation</button>
+<script>
+    //新建path
+    var path=new ol.Feature({
+      geometry: new ol.geom.LineString([ol.proj.fromLonLat([117.175051,31.857091]),ol.proj.fromLonLat([117.204803,31.860097]),ol.proj.fromLonLat([117.204982,31.860005]),ol.proj.fromLonLat([117.215367,31.861967]),
+        ol.proj.fromLonLat([117.229416,31.861293]),ol.proj.fromLonLat([117.237357,31.858808]),ol.proj.fromLonLat([117.262043,31.860863]),ol.proj.fromLonLat([117.271601,31.864145]),
+        ol.proj.fromLonLat([117.282021,31.867181]),ol.proj.fromLonLat([117.295999,31.867211])])
+    })
+
+    path.setStyle(new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        width: 10,
+        color:[2,87,189,.5]
+      })
+    }))
+      routeCoords = path.getGeometry().getCoordinates();
+    var routeLength = routeCoords.length;
+    var tempoint;
+    var geoMarker = new ol.Feature({
+        type: 'geoMarker',
+        geometry: new ol.geom.Point(routeCoords[0])
+
+    });
+    var styles = {
+        'route': new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                width: 6, color: [237, 212, 0, 0.8]
+            })
+        }),
+        'icon': new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.5, 1],
+                src: 'https://openlayers.org/en/v4.6.5/examples/data/icon.png'
+            })
+        }),
+        'geoMarker': new ol.style.Style({
+            image: new ol.style.Icon({
+                src: 'http://developer.baidu.com/map/jsdemo/img/car.png'
+            })
+        })
+    };
+
+    var animating = false;
+    var speed, now;
+    var speedInput = document.getElementById('speed');
+    var startButton = document.getElementById('start-animation');
+
+    var vectorLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            features: [geoMarker]
+        }),
+        style: function(feature) {
+            // hide geoMarker if animation is active
+            if (animating && feature.get('type') === 'geoMarker') {
+                return null;
+            }
+            return styles[feature.get('type')];
+        }
+    });
+
+    var center = [13043867.010995863, 3744566.184211268];
+    var map = new ol.Map({
+        target: document.getElementById('map'),
+        loadTilesWhileAnimating: true,
+        view: new ol.View({
+            center: center,
+            zoom: 13,
+            minZoom: 2,
+            maxZoom: 19
+        }),
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.OSM()
+            }),
+            vectorLayer
+        ]
+    });
+
+    var moveFeature = function(event) {
+        var vectorContext = event.vectorContext;
+        var frameState = event.frameState;
+        if (animating) {
+            var elapsedTime = frameState.time - now;
+            // here the trick to increase speed is to jump some indexes
+            // on lineString coordinates
+            speedInput=1;
+            var index = Math.round(speedInput * elapsedTime / 1000);
+            console.log(index);
+            if (index >= routeLength) {
+                stopAnimation(true);
+                return;
+            }
+            var currentPoint = new ol.geom.Point(routeCoords[index]);
+          if(index>0){
+              var line=new ol.Feature({
+                geometry: new ol.geom.LineString([tempoint,routeCoords[index]])
+            })
+            line.setStyle(new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                width: 8,
+                color:'red'
+              })
+            }))
+            var vecsouce=vectorLayer.getSource();
+            vecsouce.addFeature(line)
+          }
+            var feature = new ol.Feature(currentPoint);
+           tempoint=routeCoords[index];
+            vectorContext.drawFeature(feature, styles.geoMarker);
+        }
+        // tell OpenLayers to continue the postcompose animation
+        map.render();
+    };
+
+    function startAnimation() {
+        if (animating) {
+            stopAnimation(false);
+        } else {
+            animating = true;
+            now = new Date().getTime();
+            speed = speedInput.value;
+            startButton.textContent = 'Cancel Animation';
+            // hide geoMarker
+            geoMarker.setStyle(null);
+            // just in case you pan somewhere else
+            map.getView().setCenter(center);
+            map.on('postcompose', moveFeature);
+            map.render();
+        }
+    }
+
+
+    /**
+     * @param {boolean} ended end of animation.
+     */
+    function stopAnimation(ended) {
+        animating = false;
+        startButton.textContent = 'Start Animation';
+
+        // if animation cancelled set the marker at the beginning
+        var coord = ended ? routeCoords[routeLength - 1] : routeCoords[0];
+        /** @type {ol.geom.Point} */ (geoMarker.getGeometry())
+            .setCoordinates(coord);
+        //remove listener
+        map.un('postcompose', moveFeature);
+    }
+
+    startButton.addEventListener('click', startAnimation, false);
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>路书</title>
+    <style type="text/css">
+        body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+        #map_canvas{width:100%;height:500px;}
+        #result {width:100%}
+    </style>
+    <script src="//api.map.baidu.com/api?v=2.0&ak=9e0b9cd8c15cb5a937b039ab50884d63"></script>
+    <script type="text/javascript" src="Lushudiy.js"></script>
+</head>
+<body>
+<div id="map_canvas"></div>
+<div id="result"></div>
+<button id="run">开始</button>
+<button id="stop">停止</button>
+<button id="pause">暂停</button>
+<button id="hide">隐藏信息窗口</button>
+<button id="show">展示信息窗口</button>
+<script>
+    var map = new BMap.Map('map_canvas');
+    map.enableScrollWheelZoom();
+    map.centerAndZoom(new BMap.Point(117.287195,31.849209), 14);
+    var allpoints=[];
+    var ls;
+    var lsArr=[];
+    var pointArrs=[{"x":117.175051,"y":31.857091,"name":"蜀山西"},{"x":117.204803,"y":31.860097,"name":"天柱路"},{"x":117.204982,"y":31.860005,"name":"科学大道"},
+        {"x":117.215367,"y":31.861967,"name":"十里庙"},{"x":117.229416,"y":31.861293,"name":"西七里塘"},{"x":117.237357,"y":31.858808,"name":"三里庵"},
+        {"x":117.262043,"y":31.860863,"name":"安农大"},{"x":117.271601,"y":31.864145,"name":"三孝口"},{"x":117.282021,"y":31.867181,"name":"四牌楼"},
+        {"x":117.295999,"y":31.867211,"name":"大东门"}]
+    var pointArrs2=[{"x":117.311126,"y":31.875706,"name":"明光路"},{"x":117.307317,"y":31.869941,"name":"大东门"},{"x":117.30818,"y":31.862151,"name":"包公园"},
+        {"x":117.307245,"y":31.852828,"name":"合工大南区"},{"x":117.307964,"y":31.837798,"name":"朱岗"},{"x":117.308539,"y":31.828594,"name":"秋浦河路"},
+        {"x":117.309617,"y":31.820249,"name":"葛大店"},{"x":117.298622,"y":31.811412,"name":"望湖城"},{"x":117.296645,"y":31.804769,"name":"合肥南站"}]
+    allpoints.push(pointArrs)
+    allpoints.push(pointArrs2)
+    //绑定事件
+    $("run").onclick = function(){
+        for(var i=0;i<allpoints.length;i++){
+            ls=lushutest(allpoints[i])
+            lsArr.push(ls)
+            ls.start();
+        }
+    }
+    $("stop").onclick = function(){
+        ls.stop();
+    }
+    $("pause").onclick = function(){
+        for(var i=0;i<lsArr.length;i++){
+            lsArr[i].pause();
+        }
+    }
+    $("hide").onclick = function(){
+        ls.hideInfoWindow();
+    }
+    $("show").onclick = function(){
+        ls.showInfoWindow();
+    }
+    function $(element){
+        return document.getElementById(element);
+    }
+    function lushutest(pointArrs) {
+        //map.setViewport(pointArrs);
+        var lushu;
+        lushu = new BMapLib.LuShu(map,pointArrs, {
+            autoView: true,//是否开启自动视野调整，如果开启那么路书在运动过程中会根据视野自动调整
+            icon: new BMap.Icon('http://developer.baidu.com/map/jsdemo/img/car.png', new BMap.Size(52,26),{anchor : new BMap.Size(27, 13)}),
+            speed: 500,
+            enableRotation: true,//是否设置marker随着道路的走向进行旋转
+            // 【驱动方法执行，只要在回调函数onSearchComplete中处理就不会干扰最后的轨迹生成】，此处初始化就行不需要做修改
+        });
+        return lushu;
+    }
+</script>
+</body>
+</html>

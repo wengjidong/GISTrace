@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+    </style>
+
+    <script type="text/javascript" src="//api.map.baidu.com/api?v=2.0&ak=uB0gDFSUDZsnp5hSfQyGcAHA"></script>
+    <title>地图展示</title>
+</head>
+<body>
+<div id="controller" align="center">
+    <span>倍数:</span>
+    <input id="speed" type="text" value="1"/>
+    <input id="play" type="button" value="播放" onclick="startTrack()" />
+    <input id="pause" type="button" value="暂停" onclick="pause()"  disabled/>
+    <input id="reset" type="button" value="重置" onclick="reset()" />
+</div>
+<div id="allmap"></div>
+</body>
+</html>
+<script type="text/javascript">
+    //构造坐标点
+    var pointArrs=[new BMap.Point(117.175051,31.857091), new BMap.Point(117.204803,31.860097),
+        new BMap.Point(117.204982,31.860005), new BMap.Point(117.215367,31.861967),
+        new BMap.Point(117.229416,31.861293),new BMap.Point(117.237357,31.858808),new BMap.Point(117.262043,31.860863)
+            ,new BMap.Point(117.271601,31.864145),new BMap.Point(117.282021,31.867181),new BMap.Point(117.295999,31.867211)];
+    //新建索引
+    var index=0;
+    var points=[];
+    var mkr;//小车图标
+    var ST;
+    var map;
+    initMap()
+    function initMap(){
+        // 百度地图API功能
+        map = new BMap.Map("allmap");    // 创建Map实例
+        map.centerAndZoom(new BMap.Point(117.174656, 31.847368), 15);  // 初始化地图,设置中心点坐标和地图级别
+        //添加地图类型控件
+        map.addControl(new BMap.MapTypeControl({
+            mapTypes:[
+                BMAP_NORMAL_MAP,
+                BMAP_HYBRID_MAP
+            ]}));
+        map.setCurrentCity("合肥");          // 设置地图显示的城市 此项是必须设置的
+        map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+    }
+    function startTrack(){
+        document.getElementById('pause').disabled=false
+        //获取倍数
+        var sp=document.getElementById('speed').value;
+        if (index == pointArrs.length) return;
+        //清除上一个车辆图标
+        map.removeOverlay(mkr);
+        //新建车辆图标
+        mkr = new BMap.Marker(pointArrs[index],{
+            icon:new BMap.Icon('bus.png',new BMap.Size(48, 48))
+        });
+        map.addOverlay(mkr);
+        var label = new BMap.Label("经度:"+pointArrs[index].lng+"<br/>纬度:"+pointArrs[index].lat, {
+            offset: new BMap.Size(20, -25),
+            position:pointArrs[index]
+        });
+        mkr.setLabel(label);
+        //相邻两点绘制线
+        if(index>0){
+            var polyline=new BMap.Polyline([pointArrs[index], pointArrs[index-1]],{
+                strokeColor: "red",
+                strokeWeight: 5,
+                strokeOpacity: 1
+            })
+            map.addOverlay(polyline);
+        }
+        //位置跟随
+        map.panTo(pointArrs[index]);
+        index++;
+        //递归调用
+        ST=setTimeout(startTrack,1000/sp)
+    }
+    function pause() {
+        document.getElementById('pause').disabled=true
+        document.getElementById('reset').disabled=false
+        if(ST){
+            clearTimeout(ST)
+        }
+    }
+    function reset() {
+        document.getElementById('reset').disabled=true
+        document.getElementById('play').disabled=false
+        document.getElementById('pause').disabled=true
+        if(ST){
+            clearTimeout(ST)
+            //清除覆盖物
+            map.clearOverlays();
+        }
+        index=0;
+        //新建车辆图标
+        mkr = new BMap.Marker(pointArrs[index],{
+            icon:new BMap.Icon('bus.png',new BMap.Size(48, 48))
+        });
+        map.addOverlay(mkr);
+        //位置跟随
+        map.panTo(pointArrs[index]);
+    }
+</script>

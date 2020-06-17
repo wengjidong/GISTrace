@@ -1,0 +1,66 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>路书</title>
+    <style type="text/css">
+        body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+        #map_canvas{width:100%;height:500px;}
+        #result {width:100%}
+    </style>
+    <script src="//api.map.baidu.com/api?v=2.0&ak=K5HzoiMFpRG12UTerDkljIVWyNP3Bo8g"></script>
+    <script type="text/javascript" src="Lushu.js"></script>
+</head>
+<body>
+<div id="map_canvas"></div>
+<div id="result"></div>
+<button id="run">开始</button>
+<button id="stop">停止</button>
+<button id="pause">暂停</button>
+<button id="hide">隐藏信息窗口</button>
+<button id="show">展示信息窗口</button>
+<script>
+    var map = new BMap.Map('map_canvas');
+    map.enableScrollWheelZoom();
+    map.centerAndZoom(new BMap.Point(117.174656, 31.847368), 15);
+
+    var pointArrs=[new BMap.Point(117.175051,31.857091), new BMap.Point(117.204803,31.860097),
+        new BMap.Point(117.204982,31.860005), new BMap.Point(117.215367,31.861967),
+        new BMap.Point(117.229416,31.861293),new BMap.Point(117.237357,31.858808),new BMap.Point(117.262043,31.860863)
+        ,new BMap.Point(117.271601,31.864145),new BMap.Point(117.282021,31.867181),new BMap.Point(117.295999,31.867211)];
+    map.addOverlay(new BMap.Polyline(pointArrs, {strokeColor: '#802c10'}));
+    map.setViewport(pointArrs);
+
+     lushu = new BMapLib.LuShu(map,pointArrs, {
+        defaultContent: "皖A123456",//"从天安门到百度大厦"
+        autoView: true,//是否开启自动视野调整，如果开启那么路书在运动过程中会根据视野自动调整
+        icon: new BMap.Icon('bus.png', new BMap.Size(48, 48)),
+        speed: 500,
+        enableRotation: true,//是否设置marker随着道路的走向进行旋转
+         landmarkPois: [
+             {lng:117.204803,lat:31.860097,html:'天柱路站站到了',pauseTime:2},
+             {lng:117.215367,lat:31.861967,html:'科学大道站到了',pauseTime:3}
+         ]
+    });
+    //绑定事件
+    $("run").onclick = function(){
+        debugger
+        lushu.start();
+    }
+    $("stop").onclick = function(){
+        lushu.stop();
+    }
+    $("pause").onclick = function(){
+        lushu.pause();
+    }
+    $("hide").onclick = function(){
+        lushu.hideInfoWindow();
+    }
+    $("show").onclick = function(){
+        lushu.showInfoWindow();
+    }
+    function $(element){
+        return document.getElementById(element);
+    }
+</script>
+</body>
+</html>
